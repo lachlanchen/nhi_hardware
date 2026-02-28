@@ -1,58 +1,80 @@
 [English](../README.md) · [العربية](README.ar.md) · [Español](README.es.md) · [Français](README.fr.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Tiếng Việt](README.vi.md) · [中文 (简体)](README.zh-Hans.md) · [中文（繁體）](README.zh-Hant.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
 
-# NHI Hardware-Steuerung und Ereigniserfassung
+[![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
+
+# NHI Hardwaresteuerung und Ereignisaufnahme
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%2F%20Linux-informational)
 ![Status](https://img.shields.io/badge/Status-Research%20Prototype-orange)
 ![Hardware](https://img.shields.io/badge/Hardware-EVK5%20%7C%20FMC4030%20%7C%20Arduino-success)
 ![UI](https://img.shields.io/badge/Web_UI-Tornado-0ea5e9)
+![Docs](https://img.shields.io/badge/Docs-English%20%2B%20i18n-0f766e)
 
-Ein Hardware-Orchestrierungsprojekt für Event-Kamera-Experimente, das Folgendes kombiniert:
-- EVK5-Event-Kamera-Erfassung (Prophesee Metavision-Stack)
-- CNC-Bewegungssteuerung auf Basis von FMC4030
-- Serielle Arduino-LED-Steuerung
-- Minimale Web-Trigger-UI (Tornado)
+## 📖 Schnelle Navigation
 
-> Diese README ist der erste vollständige Entwurf für diesen Repository-Snapshot.
-> Annahme: In diesem Checkout gab es zuvor keine `README.md` im Root-Verzeichnis, daher wurde dieses Dokument aus Quellcode und Pipeline-Analyseartefakten erstellt.
+| Abschnitt | Zweck |
+|---|---|
+| [Installation](#installation) | Umgebung und Abhängigkeiten vorbereiten |
+| [Verwendung](#verwendung) | Web-Orchestrator und CLI-Workflows ausführen |
+| [Konfiguration](#konfiguration) | Serielle, Netzwerk- und Standardwerte anpassen |
+| [Beispiele](#beispiele) | Praktische Befehlsbeispiele ausführen |
+| [Fehlersuche](#fehlersuche) | Häufige Setup-Probleme beheben |
 
-## Überblick
+## 🧭 Projekt im Überblick
+
+| Fokus | Details |
+|---|---|
+| Ziel | Koordiniert Ereigniserfassung, Bewegungssteuerung und LED-Signalgebung für wiederholbare Laborabläufe |
+| Haupteinstieg | `app.py` (Tornado-Webauslöser + asynchrone Sequenz-Orchestrierung) |
+| Haupt-Eingaben | EVK5-Ereignis-Stream, FMC4030-Achsensteuerung, Arduino-Seriellbefehle |
+| Primäre Ausgaben | `data/axis_1_positions.csv`, optionale Ereignis-CSV-Exporte |
+| Plattformen | Windows / Linux (abhängig von SDK- und Hardware-Verfügbarkeit) |
+
+Ein Projekt zur Hardware-Orchestrierung für Event-Kamera-Experimente mit:
+- EVK5 Event-Kameracapture (Prophesee Metavision Stack)
+- FMC4030-basierter CNC-Bewegungssteuerung
+- Arduino-basierter LED-Steuerung per Serial
+- Minimaler Web-Trigger-Oberfläche (Tornado)
+
+> Annahme: Hardware-, DLL- und SDK-Umgebungen unterscheiden sich je nach Host und werden aus dem Projektcode abgeleitet; das konkrete Kommandoverhalten kann je nach OS, Treiber-Versionen und Laufzeitverfügbarkeit variieren.
+
+## 🧠 Überblick
 
 Der primäre End-to-End-Workflow ist in `app.py` implementiert:
 
-1. Optional vorhandenes `data/` in einen Zeitstempel-Ordner verschieben (`data_YYYYMMDD_HHMMSS`)
-2. Verbindung zur Arduino-LED herstellen (Standard `COM4`)
-3. CNC-Controller über `cnc/FMC4030Lib-x64-20220329/FMC4030-Dll.dll` initialisieren
-4. LED- und Y-Achsen-Bewegungssequenz ausführen
-5. Optional EVK5-Ereignisse aufzeichnen (im aktiven Ablauf derzeit deaktiviert; siehe Hinweise unten)
+1. Optionales Verschieben vorhandener `data/`-Ordner in einen Zeitstempel-Ordner (`data_YYYYMMDD_HHMMSS`)
+2. Verbinden mit Arduino-LED (standardmäßig `COM4`)
+3. Initialisieren des CNC-Controllers über `cnc/FMC4030Lib-x64-20220329/FMC4030-Dll.dll`
+4. LED- und Y-Achsen-Bewegungssequenz starten
+5. Optional EVK5-Ereignisse aufzeichnen (im aktiven Ablauf derzeit deaktiviert, siehe Hinweis unten)
 6. Achspositionsprotokolle in `data/axis_1_positions.csv` speichern
 
-### Workflow-Snapshot
+### Ablauf-Schnappschuss
 
-| Phase | Komponente | Ausgabe |
+| Stufe | Komponente | Ausgabe |
 |---|---|---|
-| Trigger | Tornado `/start` | Asynchrone Sequenzausführung |
-| Bewegung | FMC4030-Controller | Achsbewegung + Positionsabfrage |
+| Auslöser | Tornado `/start` | Asynchrone Sequenzausführung |
+| Bewegung | FMC4030-Controller | Achsenbewegung + Positionsabfrage |
 | Beleuchtung | Arduino Serial (`'1'` / `'0'`) | LED-Zustandssteuerung |
-| Sensorik | EVK5 + Metavision | Event-Stream / CSV-Export |
+| Erfassung | EVK5 + Metavision | Ereignis-Stream / CSV-Export |
 | Persistenz | Lokales Dateisystem | `data/*.csv`, rotierte Ordner |
 
-Das Repository enthält außerdem alternative/ältere Kamera-Skripte, Utilities für Frame-Nachbearbeitung und gebündelte Metavision-Python-Beispiele.
+Das Repository enthält außerdem alternative/Legacy-Kamera-Skripte, Werkzeuge für die Nachbearbeitung von Frames sowie gebündelte Metavision-Python-Beispiele.
 
-## Funktionen
+## ✨ Funktionen
 
-- Tornado-Web-Endpunkt (`/start`), um eine Bewegungs-/Erfassungssequenz asynchron zu starten
-- EVK5-Event-Aufzeichnung mit Trigger-Kanal-Aktivierung (`MAIN`) über Metavision HAL
-- CSV-Export von Events mit Event- und Systemzeitstempeln
-- FMC4030-Motorsteuerungs-Wrapper mit `ctypes` und Hersteller-DLL
-- Bewegungspositions-Logging in CSV während der Achsbewegung
-- Serielle Arduino-LED-Steuerung (`'1'`/`'0'`-Befehle)
-- Frame-Utility-Skripte (`.npy`-Shape-Inspektion und `.npy`-zu-MP4-Konvertierung)
-- Gebündelte `python_samples/`-Metavision-Beispiele für Experimente und Referenz
+- Tornado-Web-Endpunkt (`/start`) zum asynchronen Starten einer Bewegungs-/Erfassungssequenz
+- EVK5-Aufzeichnung mit aktivierbaren Triggerkanälen (`MAIN`) über Metavision HAL
+- CSV-Export von Ereignissen mit Event- und Systemzeitstempeln
+- FMC4030-Motorsteuerung über `ctypes` und herstellerspezifische DLL
+- Bewegungsposten-Logging als CSV während der Achsenbewegung
+- Arduino-LED-Steuerung per Serial (`'1'` / `'0'`)
+- Frame-Hilfsskripte (`.npy`-Formenanzeige und `.npy` zu MP4-Konvertierung)
+- Gebündelte `python_samples/`-Metavision-Beispiele zum Experimentieren und als Referenz
 
-## Projektstruktur
+## 🗂️ Projektstruktur
 
 ```text
 .
@@ -83,38 +105,38 @@ Das Repository enthält außerdem alternative/ältere Kamera-Skripte, Utilities 
 └── .auto-readme-work/20260228_231403/      # README pipeline artifacts
 ```
 
-## Voraussetzungen
+## 🧰 Voraussetzungen
 
 ### Hardware
 
-- EVK5-kompatible Event-Kamera und Treiber/SDK
-- FMC4030-kompatibler Motion-Controller, erreichbar unter konfigurierte IP/Port
+- EVK5-kompatible Event-Kamera sowie Treiber/SDK
+- FMC4030-kompatibler Bewegungscontroller erreichbar unter konfigurierter IP/Port-Kombination
 - Arduino-Board für LED-Steuerung
 
 ### Software
 
 - Python 3.x
-- Hersteller-/Runtime-Unterstützung für:
+- Vendor-/Laufzeitunterstützung für:
   - Prophesee Metavision Python-Module (`metavision_core`, `metavision_hal`, zugehörige SDK-Module)
-  - Laden der FMC4030-DLL via Python `ctypes` (`windll`-Nutzung in `cnc/cnc.py` impliziert Windows für den CNC-Pfad)
-- In den Skripten verwendete Python-Bibliotheken:
+  - Laden der FMC4030-DLL über Python `ctypes` (`windll`-Verwendung in `cnc/cnc.py` impliziert Windows-Pfad für CNC)
+- Python-Bibliotheken, die in Skripten verwendet werden:
   - `tornado`, `numpy`, `opencv-python`, `pytz`, `pyserial`
-  - Optionaler/alternativer Stack: `dv`
+  - Optional/alternativer Stack: `dv`
 
-### Umgebungs-Standards
+### Umgebungsvorgaben
 
 | Einstellung | Standard | Ort |
 |---|---|---|
-| Arduino-Serial-Port | `COM4` | `app.py`, `led.py` |
+| Arduino-Seriell-Port | `COM4` | `app.py`, `led.py` |
 | CNC-IP | `192.168.0.30` | `cnc/cnc.py` |
 | CNC-Port | `8088` | `cnc/cnc.py` |
 
 Hinweise:
-- Im aktuellen Snapshot gibt es keine `requirements.txt` oder `pyproject.toml`.
-- Der serielle Port ist in `app.py` und `led.py` standardmäßig `COM4`.
-- Standardmäßige CNC-Netzwerkeinstellungen in `cnc/cnc.py`: IP `192.168.0.30`, Port `8088`.
+- In der aktuellen Momentaufnahme gibt es keine `requirements.txt` oder `pyproject.toml`.
+- Der serielle Standard-Port ist `COM4` in `app.py` und `led.py`.
+- Standard-CNC-Netzwerkeinstellungen in `cnc/cnc.py`: IP `192.168.0.30`, Port `8088`.
 
-## Installation
+## 🔧 Installation
 
 1. Repository klonen:
 
@@ -133,24 +155,24 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-3. Basis-Python-Abhängigkeiten installieren, die von den Kernskripten genutzt werden:
+3. Basis-Python-Abhängigkeiten der Kernskripte installieren:
 
 ```bash
 pip install tornado numpy opencv-python pytz pyserial
 ```
 
-4. Kamera-SDK-Abhängigkeiten installieren, die in deiner Umgebung erforderlich sind:
+4. Kamera-SDK-Abhängigkeiten installieren, die in Ihrer Umgebung erforderlich sind:
 
 ```bash
-# Example placeholder: install Prophesee Metavision Python packages
-# Follow your SDK/distribution instructions for your OS and camera version.
+# Beispiel-Platzhalter: Prophesee Metavision Python-Pakete installieren
+# Folgen Sie den Installationsanweisungen Ihres SDKs/der Distribution für Ihr OS und Kameraversion.
 ```
 
-## Verwendung
+## 🧪 Verwendung
 
-### 1) Web-orchestrierte Sequenz (Primär)
+### 1) Web-orchestrierte Sequenz (Hauptablauf)
 
-Vom Repository-Root ausführen (wichtig für relative Pfade in `app.py`):
+Ausführen im Repository-Root (wichtig für relative Pfade in `app.py`):
 
 ```bash
 python app.py
@@ -162,31 +184,31 @@ Dann öffnen:
 http://localhost:8888
 ```
 
-Klicke auf **Start Sequence**, um den Bewegungs-/LED-Workflow auszulösen.
+Klicken Sie auf **Start Sequence**, um die Bewegungs-/LED-Workflow auszulösen.
 
-Optionales Argument, das derzeit von der App geparst wird:
+Optionales Argument, das aktuell von app geparst wird:
 
 ```bash
 python app.py --record_events True
 ```
 
-Wichtiger Verhaltenhinweis: `start_sequence()` setzt `record_events = False` später in der Ausführung zurück, sodass EVK5-Aufzeichnung deaktiviert bleiben kann, sofern der Code nicht angepasst wird.
+Wichtiger Hinweis zum Verhalten: `start_sequence()` setzt `record_events = False` später während der Ausführung wieder zurück, daher kann die EVK5-Aufzeichnung deaktiviert bleiben, sofern der Code angepasst wird.
 
-### 2) EVK5-Event-Aufzeichnung (Direkte CLI)
+### 2) EVK5-Ereignisaufnahme (direkte CLI)
 
 ```bash
 python event_sensor_evk5.py -i "" -d 10 -z Asia/Hong_Kong -o event_output
 ```
 
 Argumente:
-- `-i, --input`: Eingabequelle/-pfad für EVK5-Gerät oder Aufzeichnung
+- `-i, --input`: Eingabequelle/Pfad für EVK5-Gerät oder Aufzeichnung
 - `-d, --duration`: Aufzeichnungsdauer in Sekunden
-- `-z, --timezone`: Zeitzonenbezeichnung für Zeitstempelformatierung
-- `-o, --output`: Ausgabe-Basisname (gespeichert unter `data/<name>.csv`)
+- `-z, --timezone`: Zeitzonenbezeichnung für Zeitstempel-Formatierung
+- `-o, --output`: Basisname der Ausgabe (gespeichert unter `data/<name>.csv`)
 
-### 3) CNC-Steuerung (Direkte CLI)
+### 3) CNC-Steuerung (direkte CLI)
 
-Von `cnc/` ausführen, damit der relative DLL-Pfad in `cnc.py` korrekt aufgelöst wird:
+Führen Sie dies innerhalb von `cnc/` aus, damit der relative DLL-Pfad in `cnc.py` korrekt aufgelöst wird:
 
 ```bash
 cd cnc
@@ -196,13 +218,13 @@ python cnc.py --axis 1 --dir 1 --distance 30 --speed 20
 Weitere verfügbare Optionen:
 
 ```bash
-# Set current position as soft origin
+# Aktuelle Position als Soft-Origin setzen
 python cnc.py --set-origin
 
-# Move to absolute coordinates x,y,z
+# Zu absoluten Koordinaten x,y,z bewegen
 python cnc.py --move 0,30,0 --speed 20
 
-# Set origin after moving to provided coordinates
+# Ursprung nach Bewegung zu den angegebenen Koordinaten setzen
 python cnc.py --set-origin 0,30,0 --speed 20
 ```
 
@@ -212,45 +234,45 @@ python cnc.py --set-origin 0,30,0 --speed 20
 python led.py
 ```
 
-Aktualisiere den Port im Code, wenn du nicht `COM4` verwendest.
+Port im Code aktualisieren, falls nicht `COM4` verwendet wird.
 
-### 5) Utilities
+### 5) Hilfsprogramme
 
 ```bash
-# Print frame-array shape from one folder
+# Frame-Array-Form aus einem Ordner ausgeben
 python npy_shape.py data_20250101_120000
 
-# Print frame-array shape for all data_* folders in cwd
+# Frame-Array-Form für alle data_*-Ordner im aktuellen Verzeichnis ausgeben
 python npy_shape.py -a
 ```
 
-`npy2video.py` stellt `npy_to_video(npy_file_path, output_video_path, fps=5)` bereit und kann importiert oder für deine lokalen Pfade angepasst werden.
+`npy2video.py` stellt `npy_to_video(npy_file_path, output_video_path, fps=5)` bereit und kann importiert oder für lokale Pfade angepasst werden.
 
-## Konfiguration
+## ⚙️ Konfiguration
 
 - `motor_system.ini` und `cnc/motor_system.ini`:
-  - Persistieren Software-Ursprungskoordinaten (`ORIGIN`-Abschnitt für X/Y/Z)
+  - Persistieren Software-Origin-Koordinaten (`ORIGIN`-Sektion für X/Y/Z)
 - `app.py`:
-  - Arduino-Serial-Port: `ArduinoLED(port='COM4')`
+  - Arduino-Seriell-Port: `ArduinoLED(port='COM4')`
   - CNC-DLL-Pfad: `cnc/FMC4030Lib-x64-20220329/FMC4030-Dll.dll`
 - `event_sensor.py` (DV-Pfad):
-  - `DV_PORT` Standard `7777`
-  - `DV_PORT_FRAME` Standard `7778`
+  - Standard `DV_PORT`: `7777`
+  - Standard `DV_PORT_FRAME`: `7778`
 
-## Beispiele
+## 📸 Beispiele
 
 ### Beispiel A: Vollständige Sequenz über Web starten
 
 ```bash
 python app.py
-# visit http://localhost:8888 and press Start Sequence
+# öffnen Sie http://localhost:8888 und drücken Sie Start Sequence
 ```
 
 Erwartete Ausgaben umfassen:
 - `data/axis_1_positions.csv` (CNC-Positionsverlauf)
-- Optional `data/<events>.csv`, falls Event-Aufzeichnung im aktiven Pfad aktiviert ist
+- Optional `data/<events>.csv`, falls die Ereignisaufnahme im aktiven Pfad aktiv ist
 
-### Beispiel B: EVK5-Events für 60 Sekunden aufzeichnen
+### Beispiel B: EVK5-Ereignisse 60 Sekunden aufzeichnen
 
 ```bash
 python event_sensor_evk5.py -d 60 -o run_001_events -z Asia/Hong_Kong
@@ -259,7 +281,7 @@ python event_sensor_evk5.py -d 60 -o run_001_events -z Asia/Hong_Kong
 Erwartete Ausgabe:
 - `data/run_001_events.csv`
 
-### Beispiel C: Y-Achse per CLI hin und zurück bewegen
+### Beispiel C: Y-Achse per CLI vor- und zurückfahren
 
 ```bash
 cd cnc
@@ -267,59 +289,62 @@ python cnc.py --axis 1 --dir 1 --distance 30 --speed 100
 python cnc.py --axis 1 --dir -1 --distance 30 --speed 100
 ```
 
-## Entwicklungshinweise
+## 🧭 Entwicklungsnotizen
 
-- Das aktuelle Repository scheint ein Forschungs-/Prototyping-Workspace mit gemischten aktiven und archivierten Skripten zu sein.
-- Große erzeugte Artefakte (`event_output.csv`, `data-0503/`) sind eingecheckt; erwäge eine Data-Retention-Strategie und `.gitignore`-Updates, falls dieses Repository verteilt werden soll.
-- `python_samples/` enthält nützliche Kamera-SDK-Beispiele, kann jedoch Abhängigkeiten enthalten, die für die Kern-Orchestrierung nicht erforderlich sind.
-- Potenzielle Verbesserung der Codequalität:
-  - `argparse`-Boolean-Handling in `app.py` kann verbessert werden (`type=bool` ist bei CLI-Parsing oft irreführend).
-  - Das Event-Recording-Flag-Handling in `start_sequence()` überschreibt aktuell den anfänglichen CLI-Wert.
+- Das aktuelle Repository ist erkennbar ein Forschungs-/Prototyping-Arbeitsbereich mit gemischtem aktivem und archiviertem Skriptbestand.
+- Große generierte Artefakte (`event_output.csv`, `data-0503/`) sind versioniert; erwägen Sie eine Datenaufbewahrungsstrategie und `.gitignore`-Anpassungen, falls dieses Repository verteilt werden soll.
+- `python_samples/` enthält nützliche Kamera-SDK-Beispiele, kann aber Abhängigkeiten enthalten, die für die Kernorchestrierung nicht erforderlich sind.
+- Potenzieller Verbesserungsbedarf in der Codequalität:
+  - `argparse`-Boolean-Verarbeitung in `app.py` kann verbessert werden (`type=bool` ist in CLI-Parsing oft irreführend).
+  - Die Behandlung des Event-Recordings-Flags in `start_sequence()` überschreibt aktuell den anfänglichen CLI-Wert.
 
-## Fehlerbehebung
+## 🛠️ Fehlersuche
 
 - `ImportError: metavision_*`-Module fehlen:
-  - Installiere/konfiguriere deine Metavision-SDK-Python-Umgebung.
+  - Installieren/Sie konfigurieren Ihre Metavision-SDK-Python-Umgebung.
 - `ImportError: No module named dv`:
-  - Installiere das DV-Python-Paket, wenn du den `event_sensor.py`-Pfad nutzt.
-- Fehler beim Laden der CNC-DLL:
-  - Prüfe OS-Kompatibilität und ob `FMC4030-Dll.dll` unter dem erwarteten relativen Pfad verfügbar ist.
-  - Führe `cnc.py` aus dem Verzeichnis `cnc/` aus oder passe `dll_path` an.
+  - Installieren Sie das DV-Python-Paket, falls Sie den Pfad `event_sensor.py` verwenden.
+- CNC-DLL kann nicht geladen werden:
+  - Prüfen Sie die OS-Kompatibilität und ob `FMC4030-Dll.dll` am erwarteten relativen Pfad vorhanden ist.
+  - Führen Sie `cnc.py` aus dem Verzeichnis `cnc/` aus oder passen Sie `dll_path` an.
 - LED-Serienverbindungsfehler:
-  - Prüfe die Arduino-Portzuweisung (`COM4` vs. tatsächlicher Port).
-  - Stelle sicher, dass kein anderer Prozess das serielle Gerät belegt.
-- Keine Dateien in `data/` nach Web-Lauf:
-  - Überprüfe Schreibberechtigungen und ob der Event-Aufzeichnungspfad aktiviert ist.
+  - Prüfen Sie die Arduino-Port-Zuordnung (`COM4` vs. tatsächlicher Port).
+  - Stellen Sie sicher, dass kein anderer Prozess die serielle Schnittstelle blockiert.
+- Keine Dateien in `data/` nach Web-Start:
+  - Prüfen Sie Schreibberechtigungen und ob der Ereignis-Aufzeichnungspfad aktiviert ist.
 
-## Roadmap
+## 🗺️ Roadmap
 
-- Abhängigkeitsmanifest hinzufügen (`requirements.txt` oder `pyproject.toml`) und Versionen fixieren
-- Laufzeitkonfiguration (Ports, IP, DLL-Pfad, Geschwindigkeitsprofile) in eine einheitliche Konfigurationsdatei auslagern
-- Kamera-Backends (EVK5 und DV) hinter einer Schnittstelle normalisieren, mit klarer Modusauswahl
-- Tests/Mocks für Motion- und Sensor-Schnittstellen hinzufügen, um CI ohne Hardware zu ermöglichen
-- Strukturiertes Logging und Run-Metadaten pro Experiment ergänzen
-- Übersetzte README-Dateien unter `i18n/` erzeugen und pflegen
+- Hinzufügen eines Dependency-Manifests (`requirements.txt` oder `pyproject.toml`) samt Versions-Pinning
+- Auslagern der Laufzeitkonfiguration (Ports, IP, DLL-Pfad, Geschwindigkeitsprofile) in eine einheitliche Konfigurationsdatei
+- Vereinheitlichung von Kamera-Backends (EVK5 und DV) hinter einer Schnittstelle mit klarer Moduswahl
+- Hinzufügen von Tests/Mocks für Bewegungs- und Sensorschnittstellen, um CI ohne Hardware zu ermöglichen
+- Strukturierte Logs und Laufzeit-Metadaten pro Experiment bereitstellen
+- Generierte und gepflegte Übersetzungen der READMEs unter `i18n/` beibehalten
 
-## Mitwirken
+## 🤝 Mitwirken
 
 Beiträge sind willkommen für:
-- Verbesserungen der Hardware-Abstraktion
+- Verbesserungen bei der Hardware-Abstraktion
 - Bessere Konfiguration und Reproduzierbarkeit
-- Ausbau und Übersetzung der Dokumentation
-- Sicherheitsprüfungen und operative Schutzmechanismen für Motion-Control
+- Dokumentationsausbau und Übersetzungen
+- Sicherheitsprüfungen und Betriebsgrenzen für Bewegungssteuerung
 
-Empfohlener Beitragsablauf:
-1. Fork erstellen und Feature-Branch anlegen
-2. Fokussierte, gut reviewbare Änderungen umsetzen
-3. Gegen die eigene Hardware-Konfiguration validieren
-4. Pull Request mit reproduzierbaren Schritten und Logs einreichen
+Empfohlener Beitragspfad:
+1. Fork und Feature-Branch erstellen
+2. Fokussierte, reviewbare Änderungen vornehmen
+3. Gegen Ihre Hardware-Umgebung validieren
+4. Einen Pull Request mit reproduzierbaren Schritten und Logs einreichen
 
 ## Lizenz
 
-In diesem Repository-Snapshot ist keine Lizenzdatei vorhanden.
+Keine Lizenzdatei ist in dieser Repository-Momentaufnahme vorhanden.
 
-Annahme: Alle Rechte vorbehalten, bis ausdrücklich eine Projektlizenz hinzugefügt wird. Füge eine `LICENSE`-Datei hinzu, um Wiederverwendungsbedingungen festzulegen.
+Annahme: Alle Rechte bleiben vorbehalten, bis eine Projektlizenz explizit hinzugefügt wird. Fügen Sie eine `LICENSE`-Datei hinzu, um die Nutzungsbedingungen festzulegen.
 
-## Support
 
-In diesem Snapshot wurden keine Sponsor-/Spenden-Metadaten gefunden. Wenn du Support-Links einbinden möchtest, füge sie hier und in den übersetzten READMEs hinzu.
+## ❤️ Support
+
+| Donate | PayPal | Stripe |
+| --- | --- | --- |
+| [![Donate](https://camo.githubusercontent.com/24a4914f0b42c6f435f9e101621f1e52535b02c225764b2f6cc99416926004b7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4c617a79696e674172742d3045413545393f7374796c653d666f722d7468652d6261646765266c6f676f3d6b6f2d6669266c6f676f436f6c6f723d7768697465)](https://chat.lazying.art/donate) | [![PayPal](https://camo.githubusercontent.com/d0f57e8b016517a4b06961b24d0ca87d62fdba16e18bbdb6aba28e978dc0ea21/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f50617950616c2d526f6e677a686f754368656e2d3030343537433f7374796c653d666f722d7468652d6261646765266c6f676f3d70617970616c266c6f676f436f6c6f723d7768697465)](https://paypal.me/RongzhouChen) | [![Stripe](https://camo.githubusercontent.com/1152dfe04b6943afe3a8d2953676749603fb9f95e24088c92c97a01a897b4942/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5374726970652d446f6e6174652d3633354246463f7374796c653d666f722d7468652d6261646765266c6f676f3d737472697065266c6f676f436f6c6f723d7768697465)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |

@@ -1,6 +1,8 @@
 [English](README.md) · [العربية](i18n/README.ar.md) · [Español](i18n/README.es.md) · [Français](i18n/README.fr.md) · [日本語](i18n/README.ja.md) · [한국어](i18n/README.ko.md) · [Tiếng Việt](i18n/README.vi.md) · [中文 (简体)](i18n/README.zh-Hans.md) · [中文（繁體）](i18n/README.zh-Hant.md) · [Deutsch](i18n/README.de.md) · [Русский](i18n/README.ru.md)
 
 
+[![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
+
 # NHI Hardware Control and Event Capture
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue)
@@ -8,6 +10,27 @@
 ![Status](https://img.shields.io/badge/Status-Research%20Prototype-orange)
 ![Hardware](https://img.shields.io/badge/Hardware-EVK5%20%7C%20FMC4030%20%7C%20Arduino-success)
 ![UI](https://img.shields.io/badge/Web_UI-Tornado-0ea5e9)
+![Docs](https://img.shields.io/badge/Docs-English%20%2B%20i18n-0f766e)
+
+## 📖 Quick Navigation
+
+| Use this section | Purpose |
+|---|---|
+| [Installation](#installation) | Prepare environment and dependencies |
+| [Usage](#usage) | Run the web orchestrator and CLI workflows |
+| [Configuration](#configuration) | Tune serial, networking, and defaults |
+| [Examples](#examples) | Run practical command examples |
+| [Troubleshooting](#troubleshooting) | Fix common setup issues |
+
+## 🧭 Project at a Glance
+
+| Focus | Details |
+|---|---|
+| Mission | Coordinate event capture, motion control, and LED signaling for repeatable lab workflows |
+| Core Entry | `app.py` (Tornado web trigger + async sequence orchestration) |
+| Key Inputs | EVK5 event stream, FMC4030 axis control, Arduino serial commands |
+| Primary Outputs | `data/axis_1_positions.csv`, optional event CSV exports |
+| Platforms | Windows / Linux (SDK and hardware availability dependent) |
 
 A hardware-orchestration project for event-camera experiments combining:
 - EVK5 event camera capture (Prophesee Metavision stack)
@@ -15,10 +38,9 @@ A hardware-orchestration project for event-camera experiments combining:
 - Arduino serial LED control
 - Minimal web trigger UI (Tornado)
 
-> This README is the first complete draft for this repository snapshot.
-> Assumption: there was no pre-existing root `README.md` in this checkout, so this document is built from source code and pipeline analysis artifacts.
+> Assumption: hardware, DLL, and SDK environments vary by host and are inferred from project code; exact command behavior may differ by OS, driver versions, and runtime availability.
 
-## Overview
+## 🧠 Overview
 
 The primary end-to-end workflow is implemented in `app.py`:
 
@@ -41,7 +63,7 @@ The primary end-to-end workflow is implemented in `app.py`:
 
 The repository also contains alternative/legacy camera scripts, utilities for frame post-processing, and bundled Metavision Python samples.
 
-## Features
+## ✨ Features
 
 - Tornado web endpoint (`/start`) to launch a motion/capture sequence asynchronously
 - EVK5 event recording with trigger channel enablement (`MAIN`) via Metavision HAL
@@ -52,7 +74,7 @@ The repository also contains alternative/legacy camera scripts, utilities for fr
 - Frame utility scripts (`.npy` shape inspection and `.npy` to MP4 conversion)
 - Bundled `python_samples/` Metavision examples for experimentation and reference
 
-## Project Structure
+## 🗂️ Project Structure
 
 ```text
 .
@@ -83,7 +105,7 @@ The repository also contains alternative/legacy camera scripts, utilities for fr
 └── .auto-readme-work/20260228_231403/      # README pipeline artifacts
 ```
 
-## Prerequisites
+## 🧰 Prerequisites
 
 ### Hardware
 
@@ -114,7 +136,7 @@ Notes:
 - Serial port defaults to `COM4` in `app.py` and `led.py`.
 - Default CNC network settings in `cnc/cnc.py`: IP `192.168.0.30`, port `8088`.
 
-## Installation
+## 🔧 Installation
 
 1. Clone repository:
 
@@ -146,7 +168,7 @@ pip install tornado numpy opencv-python pytz pyserial
 # Follow your SDK/distribution instructions for your OS and camera version.
 ```
 
-## Usage
+## 🧪 Usage
 
 ### 1) Web-Orchestrated Sequence (Primary)
 
@@ -226,7 +248,7 @@ python npy_shape.py -a
 
 `npy2video.py` provides `npy_to_video(npy_file_path, output_video_path, fps=5)` and can be imported or edited for your local paths.
 
-## Configuration
+## ⚙️ Configuration
 
 - `motor_system.ini` and `cnc/motor_system.ini`:
   - Persist software origin coordinates (`ORIGIN` section for X/Y/Z)
@@ -237,7 +259,7 @@ python npy_shape.py -a
   - `DV_PORT` default `7777`
   - `DV_PORT_FRAME` default `7778`
 
-## Examples
+## 📸 Examples
 
 ### Example A: Start full sequence via web
 
@@ -267,7 +289,7 @@ python cnc.py --axis 1 --dir 1 --distance 30 --speed 100
 python cnc.py --axis 1 --dir -1 --distance 30 --speed 100
 ```
 
-## Development Notes
+## 🧭 Development Notes
 
 - Current repository appears to be a research/prototyping workspace with mixed active and archived scripts.
 - Large generated artifacts (`event_output.csv`, `data-0503/`) are committed; consider a data retention strategy and `.gitignore` updates if this repository will be distributed.
@@ -276,7 +298,7 @@ python cnc.py --axis 1 --dir -1 --distance 30 --speed 100
   - `argparse` boolean handling in `app.py` can be improved (`type=bool` is often misleading in CLI parsing).
   - Event recording flag handling in `start_sequence()` currently overrides initial CLI value.
 
-## Troubleshooting
+## 🛠️ Troubleshooting
 
 - `ImportError: metavision_*` modules missing:
   - Install/configure your Metavision SDK Python environment.
@@ -291,7 +313,7 @@ python cnc.py --axis 1 --dir -1 --distance 30 --speed 100
 - No files in `data/` after web run:
   - Verify write permissions and whether event recording path is enabled.
 
-## Roadmap
+## 🗺️ Roadmap
 
 - Add dependency manifest (`requirements.txt` or `pyproject.toml`) and pinned versions
 - Externalize runtime config (ports, IP, DLL path, speed profiles) to a unified config file
@@ -300,7 +322,7 @@ python cnc.py --axis 1 --dir -1 --distance 30 --speed 100
 - Add structured logging and run metadata per experiment
 - Generate and maintain translated README files under `i18n/`
 
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome for:
 - Hardware abstraction improvements
@@ -314,12 +336,14 @@ Suggested contribution flow:
 3. Validate against your hardware setup
 4. Submit a pull request with reproducible steps and logs
 
+## ❤️ Support
+
+| Donate | PayPal | Stripe |
+| --- | --- | --- |
+| [![Donate](https://camo.githubusercontent.com/24a4914f0b42c6f435f9e101621f1e52535b02c225764b2f6cc99416926004b7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4c617a79696e674172742d3045413545393f7374796c653d666f722d7468652d6261646765266c6f676f3d6b6f2d6669266c6f676f436f6c6f723d7768697465)](https://chat.lazying.art/donate) | [![PayPal](https://camo.githubusercontent.com/d0f57e8b016517a4b06961b24d0ca87d62fdba16e18bbdb6aba28e978dc0ea21/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f50617950616c2d526f6e677a686f754368656e2d3030343537433f7374796c653d666f722d7468652d6261646765266c6f676f3d70617970616c266c6f676f436f6c6f723d7768697465)](https://paypal.me/RongzhouChen) | [![Stripe](https://camo.githubusercontent.com/1152dfe04b6943afe3a8d2953676749603fb9f95e24088c92c97a01a897b4942/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5374726970652d446f6e6174652d3633354246463f7374796c653d666f722d7468652d6261646765266c6f676f3d737472697065266c6f676f436f6c6f723d7768697465)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
+
 ## License
 
 No license file is present in this repository snapshot.
 
 Assumption: all rights are reserved until a project license is explicitly added. Add a `LICENSE` file to define reuse terms.
-
-## Support
-
-No sponsor/donation metadata was found in this snapshot. If you want support links included, add them here and in translated READMEs.
